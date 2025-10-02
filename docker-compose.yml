@@ -1,0 +1,48 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: oil_well_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: oil_wells
+      MYSQL_USER: oil_user
+      MYSQL_PASSWORD: oil_pass
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+    networks:
+      - oil_network
+
+  pdf_parser:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oil_well_python
+    volumes:
+      - ./src:/app/src
+      - ./pdfs:/app/pdfs
+    depends_on:
+      - mysql
+    command: python -u src/pdf_parser.py
+    networks:
+      - oil_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: oil_well_phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    networks:
+      - oil_network
+
+networks:
+  oil_network:
+    driver: bridge
