@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oil Wells Map</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+    <header>
+        <h1>Oil Well Stimulation Overview</h1>
+        <p>
+            Interactive map visualising well information parsed from PDF reports and stimulation data stored in MySQL.
+        </p>
+    </header>
+    <main>
+        <section class="sidebar">
+            <h2>Well Summary</h2>
+            <ul id="well-list"></ul>
+        </section>
+        <section class="map-container">
+            <div id="map" role="region" aria-label="Oil wells map"></div>
+        </section>
+    </main>
+    <template id="popup-template">
+        <div class="popup">
+            <h3 class="popup-title"></h3>
+            <dl class="popup-details"></dl>
+            <section class="popup-data">
+                <h4>Stimulation Data</h4>
+                <div class="stimulations"></div>
+            </section>
+            <section class="popup-resources">
+                <h4>Additional Resources</h4>
+                <p class="pdf-link"></p>
+                <p class="crawler-info"></p>
+            </section>
+        </div>
+    </template>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="./app.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1f2a3a;
+    background-color: #f5f7fa;
+}
+
+header {
+    background-color: #203040;
+    color: #fff;
+    padding: 1.5rem 2rem;
+}
+
+header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.75rem;
+}
+
+header p {
+    margin: 0;
+    max-width: 60rem;
+    line-height: 1.5;
+}
+
+main {
+    display: flex;
+    flex-wrap: wrap;
+    min-height: calc(100vh - 6rem);
+}
+
+.sidebar {
+    flex: 1 1 20rem;
+    max-width: 24rem;
+    padding: 1.5rem;
+    background: #ffffff;
+    border-right: 1px solid #d7dde4;
+    overflow-y: auto;
+}
+
+.sidebar h2 {
+    margin-top: 0;
+    font-size: 1.25rem;
+}
+
+#well-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0 0;
+}
+
+#well-list li {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background: #f0f4f8;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+}
+
+#well-list li:hover,
+#well-list li:focus {
+    background: #d8e6f6;
+}
+
+#well-list li.no-geo {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+#well-list li.no-geo::after {
+    content: " (no map coordinates)";
+    font-size: 0.875rem;
+    color: #475569;
+}
+
+#well-list li.hint {
+    cursor: default;
+    background: transparent;
+    color: #475569;
+    font-style: italic;
+}
+
+.map-container {
+    flex: 3 1 40rem;
+    min-height: 30rem;
+    position: relative;
+}
+
+#map {
+    height: 100%;
+    min-height: 30rem;
+    width: 100%;
+}
+
+.popup h3 {
+    margin: 0 0 0.5rem;
+}
+
+.popup-details {
+    margin: 0;
+}
+
+.popup-details dt {
+    font-weight: bold;
+    margin-top: 0.25rem;
+}
+
+.popup-details dd {
+    margin: 0 0 0.5rem 0;
+}
+
+.popup-data {
+    margin-top: 1rem;
+}
+
+.popup-data h4,
+.popup-resources h4 {
+    margin: 0 0 0.5rem 0;
+}
+
+.stimulations article {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    border-left: 3px solid #1f78b4;
+    background: #f8fbff;
+}
+
+.stimulations article:last-child {
+    margin-bottom: 0;
+}
+
+.stimulations dl {
+    margin: 0;
+}
+
+.stimulations dt {
+    font-weight: bold;
+    margin-top: 0.25rem;
+}
+
+.stimulations dd {
+    margin: 0;
+}
+
+.popup-resources p {
+    margin: 0 0 0.5rem 0;
+}
+
+@media (max-width: 768px) {
+    main {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        max-width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #d7dde4;
+    }
+}
