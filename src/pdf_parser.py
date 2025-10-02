@@ -14,6 +14,7 @@ database using the SQLAlchemy models defined in ``db_utils``.
 from __future__ import annotations
 
 import argparse
+import html
 import logging
 import os
 import re
@@ -91,6 +92,12 @@ STIM_PATTERNS = {
     "max_treatment_rate": [r"Max(?:imum)?\s*Treatment\s*Rate[:#\s-]+([\d,]+(?:\.\d+)?)",],
     "details": [r"Details[:#\s-]+(.+)"]
 }
+
+
+HTML_TAG_RE = re.compile(r"<[^>]+>")
+NON_PRINTABLE_RE = re.compile(r"[^\x09\x0A\x0D\x20-\x7E]")
+STRING_MISSING_DEFAULT = "N/A"
+NUMERIC_MISSING_DEFAULT = 0
 
 
 def extract_text_from_pdf(pdf_path: Path, dpi: int = 300) -> str:
@@ -217,7 +224,13 @@ def parse_stimulation_data(text: str) -> Dict[str, Optional[str]]:
 def insert_data(session, well_data: Dict[str, Optional[str]], stim_data: Dict[str, Optional[str]], source_path: Path) -> None:
     """Upsert the parsed data into the database."""
 
-    well_payload = {k: v for k, v in well_data.items() if v not in (None, "")}
+    well_prepared = apply_missing_defaults(
+        well_data,
+        string_fields={"operator", "well_name", "enseco_job", "job_type", "county_state", "shl", "datum"},
+        numeric_fields={"latitude", "longitude"},
+        exclude={"api"},
+    )
+    well_payload = {k: v for k, v in well_prepared.items() if v not in (None, "")}
     if not well_payload.get("api"):
         logger.warning("Skipping %s because no API number was parsed", source_path)
         return
@@ -233,7 +246,21 @@ def insert_data(session, well_data: Dict[str, Optional[str]], stim_data: Dict[st
             setattr(well, key, value)
         logger.info("Updated existing well %s from %s", well.api, source_path.name)
 
-    stim_payload = {k: v for k, v in stim_data.items() if v not in (None, "")}
+    stim_prepared = apply_missing_defaults(
+        stim_data,
+        string_fields={"stimulated_formation", "volume_units", "type_treatment", "acid", "details"},
+        numeric_fields={
+            "top_ft",
+            "bottom_ft",
+            "stimulation_stages",
+            "volume",
+            "lbs_proppant",
+            "max_treatment_pressure",
+            "max_treatment_rate",
+        },
+        exclude={"date_stimulated"},
+    )
+    stim_payload = {k: v for k, v in stim_prepared.items() if v not in (None, "")}
     if stim_payload:
         existing = None
         if stim_payload.get("date_stimulated"):
@@ -311,7 +338,11 @@ def normalise_text(text: str) -> str:
 def clean_string(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
-    cleaned = re.sub(r"\s+", " ", value).strip()
+    unescaped = html.unescape(value)
+    without_tags = HTML_TAG_RE.sub(" ", unescaped)
+    without_controls = re.sub(r"[\r\n\t]+", " ", without_tags)
+    without_specials = NON_PRINTABLE_RE.sub(" ", without_controls)
+    cleaned = re.sub(r"\s+", " ", without_specials).strip()
     return cleaned or None
 
 
@@ -361,6 +392,34 @@ def limit_length(value: Optional[str], max_length: int) -> Optional[str]:
     if len(value) <= max_length:
         return value
     return value[:max_length]
+
+
+def apply_missing_defaults(
+    data: Dict[str, Optional[str]],
+    *,
+    string_fields: Iterable[str],
+    numeric_fields: Iterable[str],
+    exclude: Optional[Iterable[str]] = None,
+) -> Dict[str, Optional[str]]:
+    """Replace missing values with standard defaults before persistence."""
+
+    exclude_set = set(exclude or [])
+    updated = dict(data)
+
+    for field in string_fields:
+        if field in exclude_set:
+            continue
+        if updated.get(field) in (None, ""):
+            updated[field] = STRING_MISSING_DEFAULT
+
+    for field in numeric_fields:
+        if field in exclude_set:
+            continue
+        value = updated.get(field)
+        if value is None or value == "":
+            updated[field] = NUMERIC_MISSING_DEFAULT
+
+    return updated
 
 
 def extract_api_fallback(text: str) -> Optional[str]:
