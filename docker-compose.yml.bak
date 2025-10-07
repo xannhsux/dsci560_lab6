@@ -19,14 +19,44 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: oil_well_pipeline
+    container_name: oil_well_python
     volumes:
       - ./src:/app/src
       - ./pdfs:/app/pdfs
-      - ./ocr_cache:/app/ocr_cache
     depends_on:
       - mysql
-    command: python -u src/process_all.py
+    command: python -u src/pdf_parser.py
+    networks:
+      - oil_network
+
+  web_scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oil_well_scraper
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      - mysql
+    command: python -u src/enrich_wells.py
+    environment:
+      DB_HOST: mysql
+      DB_USER: oil_user
+      DB_PASSWORD: oil_pass
+      DB_NAME: oil_wells
+    networks:
+      - oil_network
+
+  demo_scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oil_well_demo_scraper
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      - mysql
+    command: python -u src/enrich_wells_demo.py
     environment:
       DB_HOST: mysql
       DB_USER: oil_user

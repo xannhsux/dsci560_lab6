@@ -47,6 +47,13 @@ class Well(Base):
     longitude = Column(Float)
     datum = Column(String(255))
 
+    # Web-scraped fields from drillingedge.com
+    well_status = Column(String(255))
+    well_type = Column(String(255))
+    closest_city = Column(String(255))
+    barrels_oil_produced = Column(Float)
+    gas_produced = Column(Float)
+
     stimulations = relationship("StimulationData", back_populates="well", cascade="all, delete-orphan")
 
 

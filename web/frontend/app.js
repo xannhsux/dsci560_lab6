@@ -62,7 +62,7 @@ function renderWells(wells) {
             const marker = L.marker([well.latitude, well.longitude], {
                 title,
             });
-            marker.bindPopup(renderPopup(well));
+            marker.on('click', () => showWellDetails(well));
             marker.addTo(map);
             wellMarkers.set(markerKey, marker);
             bounds.push([well.latitude, well.longitude]);
@@ -92,10 +92,17 @@ function focusWell(well, markerKey) {
     if (isValidLatLng(well.latitude, well.longitude)) {
         map.setView([well.latitude, well.longitude], 10);
     }
-    const marker = wellMarkers.get(markerKey);
-    if (marker) {
-        marker.openPopup();
-    }
+    showWellDetails(well);
+}
+
+function showWellDetails(well) {
+    const panel = document.getElementById('well-details-panel');
+    const content = document.getElementById('well-details-content');
+
+    content.innerHTML = '';
+    content.appendChild(renderPopup(well));
+
+    panel.classList.add('open');
 }
 
 function isFiniteNumber(value) {
@@ -132,7 +139,32 @@ function renderPopup(well) {
     addDetail(detailList, 'Job Type', well.job_type);
     addDetail(detailList, 'County / State', well.county_state);
     addDetail(detailList, 'Surface Hole Location (SHL)', well.shl);
+    const coordinates = formatCoordinates(well.latitude, well.longitude);
+    if (coordinates) {
+        addDetail(detailList, 'Coordinates', coordinates);
+    }
     addDetail(detailList, 'Datum', well.datum);
+
+    // Web-scraped fields
+    addDetail(detailList, 'Well Status', well.well_status);
+    addDetail(detailList, 'Well Type', well.well_type);
+    addDetail(detailList, 'Closest City', well.closest_city);
+
+    // Production stats - populate the stat cards
+    const oilValue = root.querySelector('.oil-value');
+    const gasValue = root.querySelector('.gas-value');
+
+    if (well.barrels_oil_produced && well.barrels_oil_produced > 0) {
+        oilValue.textContent = formatNumber(well.barrels_oil_produced);
+    } else {
+        oilValue.textContent = 'N/A';
+    }
+
+    if (well.gas_produced && well.gas_produced > 0) {
+        gasValue.textContent = formatNumber(well.gas_produced);
+    } else {
+        gasValue.textContent = 'N/A';
+    }
 
     const stimulationsRoot = root.querySelector('.stimulations');
     if (Array.isArray(well.stimulations) && well.stimulations.length > 0) {
@@ -151,9 +183,10 @@ function renderPopup(well) {
             addDetail(list, 'Proppant (lbs)', formatNumber(stim.lbs_proppant));
             addDetail(list, 'Max Pressure', formatNumber(stim.max_treatment_pressure));
             addDetail(list, 'Max Rate', formatNumber(stim.max_treatment_rate));
-            if (stim.details) {
-                addDetail(list, 'Details', stim.details);
-            }
+            // Skip Details field - often contains OCR artifacts and form text
+            // if (stim.details) {
+            //     addDetail(list, 'Details', stim.details);
+            // }
 
             article.appendChild(list);
             stimulationsRoot.appendChild(article);
@@ -168,7 +201,11 @@ function renderPopup(well) {
     pdfPlaceholder.textContent = 'PDF report: access original files via the /pdfs volume inside the project.';
 
     const crawlerPlaceholder = root.querySelector('.crawler-info');
-    crawlerPlaceholder.textContent = 'Crawler data: integrate scraped results here once available.';
+    if (well.well_status && well.well_status !== 'N/A') {
+        crawlerPlaceholder.textContent = `Web data enriched from drillingedge.com: Status=${well.well_status}, Type=${well.well_type}, City=${well.closest_city}`;
+    } else {
+        crawlerPlaceholder.textContent = 'Crawler data: Run web_scraper service to enrich wells with data from drillingedge.com.';
+    }
 
     const wrapper = document.createElement('div');
     wrapper.appendChild(root);
@@ -177,6 +214,10 @@ function renderPopup(well) {
 
 function addDetail(container, label, value) {
     if (value === null || value === undefined || value === '') {
+        return;
+    }
+    // Skip fields with "N/A" default values
+    if (value === 'N/A' || value === 0 || value === '0') {
         return;
     }
     const dt = document.createElement('dt');
@@ -210,4 +251,15 @@ function formatVolume(volume, units) {
         return null;
     }
     return `${Number(volume).toLocaleString(undefined, { maximumFractionDigits: 2 })}${units ? ` ${units}` : ''}`;
+}
+
+function formatCoordinates(latitude, longitude) {
+    if (!isValidLatLng(latitude, longitude)) {
+        return null;
+    }
+    const latHemisphere = latitude >= 0 ? 'N' : 'S';
+    const lonHemisphere = longitude >= 0 ? 'E' : 'W';
+    const latValue = Math.abs(Number(latitude)).toFixed(5);
+    const lonValue = Math.abs(Number(longitude)).toFixed(5);
+    return `${latValue}° ${latHemisphere}, ${lonValue}° ${lonHemisphere}`;
 }

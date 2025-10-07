@@ -22,11 +22,30 @@
         <section class="map-container">
             <div id="map" role="region" aria-label="Oil wells map"></div>
         </section>
+        <aside id="well-details-panel" class="well-details-panel">
+            <button class="close-btn" onclick="document.getElementById('well-details-panel').classList.remove('open')">Close</button>
+            <div id="well-details-content"></div>
+        </aside>
     </main>
     <template id="popup-template">
         <div class="popup">
             <h3 class="popup-title"></h3>
             <dl class="popup-details"></dl>
+            <section class="production-stats">
+                <h4>Production</h4>
+                <div class="stats-grid">
+                    <div class="stat-card oil">
+                        <div class="stat-label">Oil Produced</div>
+                        <div class="stat-value oil-value"></div>
+                        <div class="stat-unit">Barrels</div>
+                    </div>
+                    <div class="stat-card gas">
+                        <div class="stat-label">Gas Produced</div>
+                        <div class="stat-value gas-value"></div>
+                        <div class="stat-unit">MCF</div>
+                    </div>
+                </div>
+            </section>
             <section class="popup-data">
                 <h4>Stimulation Data</h4>
                 <div class="stimulations"></div>

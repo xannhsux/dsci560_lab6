@@ -40,6 +40,12 @@ def create_app() -> Flask:
             "latitude": well.latitude,
             "longitude": well.longitude,
             "datum": well.datum,
+            # Web-scraped fields
+            "well_status": well.well_status,
+            "well_type": well.well_type,
+            "closest_city": well.closest_city,
+            "barrels_oil_produced": well.barrels_oil_produced,
+            "gas_produced": well.gas_produced,
         }
         if include_stimulations:
             payload["stimulations"] = [_stimulation_to_dict(stim) for stim in well.stimulations]
